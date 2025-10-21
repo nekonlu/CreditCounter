@@ -263,7 +263,7 @@ export default function Home() {
       <header className={styles.header}>
         <div className={styles.headerContent}>
           <div>
-            <h1>木更津高専 クレジットカウンター</h1>
+            <h1>クレジットカウンター</h1>
             <p>学科・年度ごとの科目取得状況を可視化するユーティリティ</p>
           </div>
           <div className={styles.headerMeta}>
