@@ -57,7 +57,8 @@ CreditSummary {
         "departmentName": "機械工学科",
         "year": "2021",
         "fetchedAt": "2025-10-21T07:00:00.000Z",
-        "cached": true
+        "cached": true,
+        "source": "csv"
       }
     }
     ```
@@ -65,16 +66,18 @@ CreditSummary {
     - `400` 不正なパラメータ
     - `502` スクレイピング先の失敗
 
-## 4. スクレイピングフロー
-1. パラメータに応じ URL `https://syllabus.kosen-k.go.jp/Pages/PublicSubjects` を生成
-2. `fetch` で HTML を取得（User-Agent 指定）
-3. `cheerio` で以下の情報を抽出
+## 4. スクレイピング & CSV フロー
+0. `SYLLABUS_CSV_DIR`（既定: `web/data/syllabus`）に `${department}-${year}.csv` があれば優先して読み込み、`Subject[]` に整形
+1. CSV が無い場合は `python3 web/scripts/scraping4.py {year} {directory}` を実行して生成を試行し、成功時は再度 CSV を読み込む
+2. それでもデータが得られなければ、パラメータに応じ URL `https://syllabus.kosen-k.go.jp/Pages/PublicSubjects` を生成
+3. `fetch` で HTML を取得（User-Agent 指定）
+4. `cheerio` で以下の情報を抽出
    - `.mcc-hide` から教科名
    - `td` から分類（一般/専門）、必修/選択、単位数
    - `class c{1..5}m` から学年ブロックを推定
-4. 特定科目の重複や名称差異を調整（`英語演習ⅠＡ / ⅠＢ` 例はスキップ処理）
-5. CSV 相当の配列を構築し、`Subject[]` に整形
-6. キャッシュへ保存（キー: `${department}-${year}`）
+5. 特定科目の重複や名称差異を調整（`英語演習ⅠＡ / ⅠＢ` 例はスキップ処理）
+6. CSV 相当の配列を構築し、`Subject[]` に整形
+7. キャッシュへ保存（キー: `${department}-${year}`）
 
 ## 5. フロントエンド UI 構成
 - `app/page.js` に SPA 風 UI を構築
