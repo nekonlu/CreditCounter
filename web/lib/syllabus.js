@@ -18,6 +18,10 @@ const SCRAPER_SCRIPT_PATH =
 const PYTHON_BIN = process.env.PYTHON ?? "python3";
 const execFileAsync = promisify(execFile);
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function normalizeYear(input) {
   if (!input) return DEFAULT_YEAR;
   const match = String(input).match(/^(\d{4})$/);
@@ -171,12 +175,56 @@ function parseSubjects(html, department, year) {
   return items;
 }
 
-async function loadSubjectsFromCsv(department, year, { allowGenerate = true } = {}) {
-  const filename = `${department.code}-${year}.csv`;
-  const filePath = path.join(CSV_DIRECTORY, filename);
+async function resolveCsvPath(department, year) {
+  const codes = [department.code, department.id, department.name]
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+  const candidates = new Set();
+
+  codes.forEach((code) => {
+    candidates.add(`${code}-${year}.csv`);
+    candidates.add(`${code}_${year}.csv`);
+    candidates.add(`${code}${year}.csv`);
+  });
+
+  for (const candidate of candidates) {
+    const candidatePath = path.join(CSV_DIRECTORY, candidate);
+    try {
+      await fs.access(candidatePath);
+      return candidatePath;
+    } catch (error) {
+      if (error.code !== "ENOENT") {
+        throw error;
+      }
+    }
+  }
 
   try {
-    const raw = await fs.readFile(filePath, "utf8");
+    const entries = await fs.readdir(CSV_DIRECTORY);
+    for (const code of codes) {
+      const pattern = new RegExp(`^${escapeRegExp(code)}[-_]?${escapeRegExp(year)}\\.csv$`, "i");
+      const match = entries.find((name) => pattern.test(name));
+      if (match) {
+        return path.join(CSV_DIRECTORY, match);
+      }
+    }
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      throw error;
+    }
+  }
+
+  return null;
+}
+
+async function loadSubjectsFromCsv(department, year, { allowGenerate = true } = {}) {
+  const filePath = await resolveCsvPath(department, year);
+  const fallbackName = `${department.code}-${year}.csv`;
+  const filename = filePath ? path.basename(filePath) : fallbackName;
+  const targetPath = filePath ?? path.join(CSV_DIRECTORY, fallbackName);
+
+  try {
+    const raw = await fs.readFile(targetPath, "utf8");
     const lines = raw
       .split(/\r?\n/)
       .map((line) => line.trim())
@@ -231,7 +279,7 @@ async function loadSubjectsFromCsv(department, year, { allowGenerate = true } = 
 
     return subjects.filter((subject) => subject.grade !== null);
   } catch (error) {
-    if (error.code === "ENOENT") {
+    if (error.code === "ENOENT" || filePath === null) {
       if (allowGenerate && (await generateCsvIfPossible(year))) {
         return loadSubjectsFromCsv(department, year, { allowGenerate: false });
       }
