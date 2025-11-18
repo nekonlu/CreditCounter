@@ -13,6 +13,26 @@ npm install
 
 Node.js 18 以降（推奨: 20 以上）を利用してください。
 
+### CSV 生成用の Python 環境（オプション）
+
+スクレイピング先の仕様変更やネットワーク制限に備えて、シラバス情報を CSV ファイルとして保存しておけます。Python 3.11 以上を利用し、以下のように仮想環境を用意してください。
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install requests beautifulsoup4
+```
+
+年度データを更新したい場合は、プロジェクトルートで次のコマンドを実行します。
+
+```bash
+source .venv/bin/activate
+python3 web/scripts/scraping4.py 2025 web/data/syllabus
+```
+
+引数には取得したい年度（4 桁）と出力ディレクトリを指定できます。既定では `web/data/syllabus` を参照し、環境変数 `SYLLABUS_CSV_DIR` で変更可能です。
+
 ## 開発サーバー
 
 ```bash
@@ -47,6 +67,10 @@ npm start
 - HTML 解析: `cheerio`
 - キャッシュ: サーバー内メモリに 15 分保持（`CACHE_TTL_MS`）
 - ユーザーエージェント: `CreditCounter/1.0 (+https://github.com/yoji/)`
+
+### CSV フォールバック
+
+`web/lib/syllabus.js` は `SYLLABUS_CSV_DIR`（既定: `web/data/syllabus`）に `${department}-${year}.csv` が存在する場合、その内容を優先的に読み込みます。CSV が見つからなければ自動で `web/scripts/scraping4.py` を呼び出し生成を試み、それでも取得できない場合にのみオンラインスクレイピングへフォールバックします。CSV から読み込んだデータのメタ情報には `source: "csv"` が含まれます。
 
 科目名・区分などの取得ロジックは `lib/syllabus.js` を参照してください。必要に応じて正規化ルールを更新します。
 
