@@ -21,7 +21,7 @@ class Scraping:
             self.year = '2025'
 
         try:
-            self.dir = args[2]
+            self.dir = '../data/'
         except:
             self.dir = './'
 
@@ -38,10 +38,10 @@ class Scraping:
             id.append( str(self.department_id_alpha[int(department)-11])+ '-' + self.year + '-' + str(i))
             if data == '一般' or data == '専門':
                 ippan_senmon.append(data)
-            
+
             if '必修' in data or '選択' in data:
                 hissyu_sentaku.append(data)
-            
+
             if '単位' in data:
                 tanni_flag = True
                 continue
@@ -65,7 +65,7 @@ class Scraping:
                 else:
                     grade_count += 1
                     grade.append(grade_count + 1)
-                
+
                 cnt += 4
 
     def write(self,id,department,subjects,grade,ippan_senmon,hissyu_sentaku,tanni):
@@ -74,7 +74,7 @@ class Scraping:
         f.write('ID,教科名,学年,科目,区分,単位数\n')
         for i in range(len(subjects)):
             f.write(id[i] + ',' + subjects[i] + ',' + str(grade[i]) + ',' + ippan_senmon[i] + ',' + hissyu_sentaku[i] + ',' + tanni[i] + '\n')
-    
+
     def mainloop(self):
         for department in self.department_id:
             url = self.common_url + self.school_id + '&department_id=' + department + '&year=' + self.year + ' &lang=ja'
@@ -90,13 +90,13 @@ class Scraping:
             hissyu_sentaku = []
             tanni = []
             self.element_counter(soup,id,department,ippan_senmon,hissyu_sentaku,tanni)
-            
+
 
             grade = []
             self.grade_counter(soup,grade)
-            
+
             self.write(id,department,subjects,grade,ippan_senmon,hissyu_sentaku,tanni)
-            
+
 
 scraping = Scraping(school_id='14',department_id=['11', '12', '13', '14', '15'],department_id_alpha=['M', 'E', 'D', 'J', 'C'],common_url='https://syllabus.kosen-k.go.jp/Pages/PublicSubjects?school_id=',header = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
