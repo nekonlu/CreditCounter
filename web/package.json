@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "test": "vitest",
     "build": "next build --turbopack",
     "start": "next start"
   },
@@ -12,5 +13,8 @@
     "next": "15.5.6",
     "react": "19.1.0",
     "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.1"
   }
 }

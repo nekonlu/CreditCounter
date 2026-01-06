@@ -329,6 +329,13 @@ function normalizeRequirementFromCsv(value) {
   return "必修";
 }
 
+export const __syllabusInternals = {
+  escapeRegExp,
+  normalizeYear,
+  resolveDepartment,
+  parseSubjects,
+};
+
 export async function fetchSubjects({ departmentCode, year }) {
   const department = resolveDepartment(departmentCode);
   const normalizedYear = normalizeYear(year);
